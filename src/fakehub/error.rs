@@ -9,7 +9,9 @@ pub enum Error {
     #[error("No free port available, tried from {0} upward.")]
     NoAvailablePorts(u16),
     #[error("No user with id {0} exists.")]
-    NoSuchUser(UserId),
+    NoSuchUserId(UserId),
+    #[error("No user with login {0} exists.")]
+    NoSuchUserLogin(String),
     #[error("Failed to parse URL {0}")]
     UrlParse(String),
     #[error("Authentication URL is missing a client id")]
@@ -61,7 +63,9 @@ impl IntoResponse for Error {
             Self::NoAvailablePorts(_) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, format!("{}", self)).into_response()
             }
-            Self::NoSuchUser(_) => (StatusCode::UNAUTHORIZED, format!("{}", self)).into_response(),
+            Self::NoSuchUserId(_) => {
+                (StatusCode::UNAUTHORIZED, format!("{}", self)).into_response()
+            }
             Self::UrlParse(_) => {
                 (StatusCode::UNPROCESSABLE_ENTITY, format!("{}", self)).into_response()
             }

@@ -87,6 +87,21 @@ impl GithubClient {
             .json()
             .await?)
     }
+
+    /// Get a user's public profile.
+    pub async fn get_user_detail_public(
+        &self,
+        username: &str,
+    ) -> Result<UserDetailResponse, Error> {
+        Ok(self
+            .http_client
+            .get(format!("{}/user/{}", self.api_base_url, username))
+            .header("Accept", "application/json")
+            .send()
+            .await?
+            .json()
+            .await?)
+    }
 }
 
 impl std::fmt::Debug for GithubClient {

@@ -1,3 +1,4 @@
+use axum::extract::Path;
 use axum::{extract::State, http::HeaderMap, routing::get, Json, Router};
 
 use crate::{
@@ -17,11 +18,9 @@ pub struct ApiDotGithubDotCom {
 impl ApiDotGithubDotCom {
     /// Create and start a new fake api.github.com.
     pub fn new(starting_port: u16, fakehub_state: FakehubStateRef) -> Result<Self> {
-        // TODO: configure server to behave enough like api.github.com
-        //       for integration testing.
-
         let app = Router::new()
             .route("/user", get(get_user_detail))
+            .route("/user/:login", get(get_user_detail_public))
             .with_state(fakehub_state);
 
         Ok(Self {
@@ -57,7 +56,7 @@ async fn get_user_detail(
     };
     let user = match fakehub_state.users.get(user_id) {
         Some(user) => user,
-        None => return Err(Error::NoSuchUser(*user_id)),
+        None => return Err(Error::NoSuchUserId(*user_id)),
     };
 
     Ok(Json(UserDetailResponse {
@@ -65,5 +64,23 @@ async fn get_user_detail(
         login: user.login.clone(),
         html_url: user.html_url.clone(),
         avatar_url: user.avatar_url.clone(),
+    }))
+}
+
+async fn get_user_detail_public(
+    State(fakehub_state): State<FakehubStateRef>,
+    Path(login): Path<String>,
+) -> Result<Json<UserDetailResponse>> {
+    let fakehub_state = fakehub_state.lock().await;
+    let user = match fakehub_state.get_user_by_login(&login) {
+        Some(user) => user,
+        None => return Err(Error::NoSuchUserLogin(login)),
+    };
+
+    Ok(Json(UserDetailResponse {
+        id: *user.0,
+        login: user.1.login.clone(),
+        html_url: user.1.html_url.clone(),
+        avatar_url: user.1.avatar_url.clone(),
     }))
 }

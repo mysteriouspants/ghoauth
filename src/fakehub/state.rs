@@ -51,7 +51,7 @@ impl FakehubState {
         let user_id = user_id.to_owned();
 
         if !self.users.contains_key(&user_id) {
-            return Err(Error::NoSuchUser(user_id));
+            return Err(Error::NoSuchUserId(user_id));
         }
 
         let issued_code = format!("token_{}", user_id);
@@ -81,6 +81,10 @@ impl FakehubState {
         self.tokens.insert(issued_token.to_owned(), user_id);
 
         issued_token
+    }
+
+    pub fn get_user_by_login(&self, login: &str) -> Option<(&UserId, &User)> {
+        self.users.iter().find(|u| u.1.login == login)
     }
 }
 
