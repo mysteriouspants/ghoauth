@@ -11,6 +11,7 @@ use crate::fakehub::{Error, Result};
 
 /// A temporarily running Axum server which stops when it is dropped, or
 /// when the associated runtime shuts down. Whichever happens first.
+#[derive(Debug)]
 pub struct TempServer {
     pub socket_addr: SocketAddr,
     shutdown_channel: Option<Sender<()>>,

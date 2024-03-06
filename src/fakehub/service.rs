@@ -15,6 +15,7 @@ use super::{
 
 /// A fake implementation of github.com and api.github.com, complete
 /// enough for use in an integration test.
+#[derive(Debug)]
 pub struct Fakehub {
     state: FakehubStateRef,
     root_server: GithubDotCom,

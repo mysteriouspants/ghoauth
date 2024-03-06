@@ -11,6 +11,7 @@ use super::{error::Result, temp_server::TempServer};
 /// A fake implementation of api.github.com, complete enough to stand in
 /// for the real thing in an integration tested OAuth flow. Which isn't
 /// very complete at all, now is it?
+#[derive(Debug)]
 pub struct ApiDotGithubDotCom {
     pub _temp_server: TempServer,
 }

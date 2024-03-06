@@ -13,6 +13,7 @@ use super::{error::Result, state::FakehubStateRef, temp_server::TempServer};
 /// A fake implementation of github.com, complete enough to stand in for
 /// the real thing in an integration tested OAuth flow. Which isn't very
 /// complete at all, now is it?
+#[derive(Debug)]
 pub struct GithubDotCom {
     pub _temp_server: TempServer,
 }

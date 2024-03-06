@@ -11,17 +11,20 @@ pub(crate) type Code = String;
 pub(crate) type UserId = i64;
 pub(crate) type Token = String;
 
+#[derive(Debug)]
 pub struct Client {
     pub secret: String,
     pub redirect_url: Url,
 }
 
+#[derive(Debug)]
 pub struct User {
     pub login: String,
     pub avatar_url: String,
     pub html_url: String,
 }
 
+#[derive(Debug)]
 pub struct FakehubState {
     pub users: HashMap<UserId, User>,
     pub clients: HashMap<ClientId, Client>,
