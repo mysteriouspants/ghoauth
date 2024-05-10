@@ -18,14 +18,14 @@ pub struct ApiDotGithubDotCom {
 
 impl ApiDotGithubDotCom {
     /// Create and start a new fake api.github.com.
-    pub fn new(starting_port: u16, fakehub_state: FakehubStateRef) -> Result<Self> {
+    pub async fn new(starting_port: u16, fakehub_state: FakehubStateRef) -> Result<Self> {
         let app = Router::new()
             .route("/user", get(get_user_detail))
             .route("/user/:login", get(get_user_detail_public))
             .with_state(fakehub_state);
 
         Ok(Self {
-            _temp_server: TempServer::new(starting_port, app)?,
+            _temp_server: TempServer::new(starting_port, app).await?,
         })
     }
 

@@ -24,11 +24,11 @@ pub struct Fakehub {
 
 impl Fakehub {
     /// Create a new Fakehub.
-    pub fn new() -> Result<Self> {
+    pub async fn new() -> Result<Self> {
         let state = Arc::new(Mutex::new(FakehubState::new()));
 
-        let root_server = GithubDotCom::new(3050, state.clone())?;
-        let api_server = ApiDotGithubDotCom::new(3051, state.clone())?;
+        let root_server = GithubDotCom::new(3050, state.clone()).await?;
+        let api_server = ApiDotGithubDotCom::new(3051, state.clone()).await?;
 
         Ok(Self {
             root_server,

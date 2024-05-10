@@ -1,7 +1,8 @@
 use std::net::SocketAddr;
 
-use axum::{Router, Server};
+use axum::Router;
 use tokio::{
+    net::TcpListener,
     spawn,
     sync::oneshot::{channel, Sender},
     task::JoinHandle,
@@ -20,11 +21,14 @@ pub struct TempServer {
 
 impl TempServer {
     // Start the server.
-    pub fn new(starting_port: u16, app: Router) -> Result<Self> {
+    pub async fn new(starting_port: u16, app: Router) -> Result<Self> {
         let port = port_selector::select_from_given_port(starting_port)
             .ok_or(Error::NoAvailablePorts(starting_port))?;
         let socket = SocketAddr::from(([127, 0, 0, 1], port));
-        let server = Server::bind(&socket).serve(app.into_make_service());
+        let listener = TcpListener::bind(socket)
+            .await
+            .map_err(|e| Error::Bind(e.to_string()))?;
+        let server = axum::serve(listener, app.into_make_service());
         let (tx, rx) = channel::<()>();
         let graceful = server.with_graceful_shutdown(async {
             rx.await.ok();

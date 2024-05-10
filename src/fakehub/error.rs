@@ -8,6 +8,8 @@ use crate::fakehub::state::UserId;
 pub enum Error {
     #[error("No free port available, tried from {0} upward.")]
     NoAvailablePorts(u16),
+    #[error("Failed to bind to socket: {0}")]
+    Bind(String),
     #[error("No user with id {0} exists.")]
     NoSuchUserId(UserId),
     #[error("No user with login {0} exists.")]

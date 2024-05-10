@@ -5,13 +5,13 @@ use axum::{
     http::StatusCode,
     response::{Html, IntoResponse, Response},
     routing::get,
-    Router, Server,
+    serve, Router,
 };
 use clap::Parser;
 use ghoauth::GithubClient;
 use maud::{html, DOCTYPE};
 use serde::Deserialize;
-use tokio::sync::RwLock;
+use tokio::{net::TcpListener, sync::RwLock};
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -41,6 +41,9 @@ async fn main() {
     tracing_subscriber::fmt::init();
 
     let addr = SocketAddr::from(([127, 0, 0, 1], args.port));
+    let listener = TcpListener::bind(addr)
+        .await
+        .expect(&format!("Cannot bind to address {}", addr));
     let app_state = AppState {
         github_client: Arc::new(RwLock::new(
             GithubClient::new(&args.client_id, &args.client_secret).unwrap(),
@@ -56,10 +59,7 @@ async fn main() {
 
     println!("Now serving on http://{}", addr);
 
-    Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    serve(listener, app.into_make_service()).await.unwrap();
 }
 
 async fn login_page(State(app_state): State<AppState>) -> Html<String> {
