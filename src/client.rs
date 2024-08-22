@@ -2,8 +2,8 @@ use crate::{error::Error, shapes::GetAccessTokenResponse, UserDetailResponse};
 
 use reqwest::Client as ReqwestClient;
 
-const BASE_URL: &str = "https://github.com";
-const API_BASE_URL: &str = "https://api.github.com";
+pub const BASE_URL: &str = "https://github.com";
+pub const API_BASE_URL: &str = "https://api.github.com";
 
 /// A client for interacting with Github programmatically.
 #[derive(Clone)]

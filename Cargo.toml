@@ -2,7 +2,6 @@
 name = "ghoauth"
 description = "Just enough Github client to OAuth."
 license = "BSD-2-Clause"
-license-file = "LICENSE.md"
 authors = ["Christopher R. Miller <xpm@mysteriouspants.com>"]
 version = "0.1.0"
 edition = "2021"

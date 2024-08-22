@@ -48,7 +48,7 @@
 //! ```
 
 pub use crate::{
-    client::GithubClient,
+    client::{GithubClient, API_BASE_URL, BASE_URL},
     error::Error,
     shapes::{GetAccessTokenResponse, UserDetailResponse},
 };
