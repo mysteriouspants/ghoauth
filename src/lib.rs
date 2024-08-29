@@ -48,7 +48,7 @@
 //! ```
 
 pub use crate::{
-    client::{GithubClient, API_BASE_URL, BASE_URL},
+    client::{GithubClient, GithubSyncClient, API_BASE_URL, BASE_URL},
     error::Error,
     shapes::{GetAccessTokenResponse, UserDetailResponse},
 };
@@ -62,7 +62,10 @@ pub mod fakehub;
 
 #[cfg(test)]
 mod tests {
-    use crate::fakehub::{Fakehub, User};
+    use crate::{
+        fakehub::{Fakehub, FakehubSync, User},
+        GithubSyncClient,
+    };
 
     const CLIENT_ID: &str = "1234567890";
     const CLIENT_SECRET: &str = "SECRET_SQUIRREL_STUFF";
@@ -99,5 +102,31 @@ mod tests {
         assert_eq!(USER, user_detail.login);
 
         fakehub.shutdown().await;
+    }
+
+    #[test]
+    fn oauth_flow_sync() {
+        let fakehub = FakehubSync::new().expect("cannot start local fakehub server");
+
+        let github_client = GithubSyncClient::new_from_async_client(
+            fakehub.add_client(CLIENT_ID, CLIENT_SECRET).unwrap(),
+        );
+        fakehub.add_user(
+            USER_ID,
+            User {
+                login: USER.to_string(),
+                avatar_url: USER_AVATAR_URL.to_string(),
+                html_url: USER_HTML_URL.to_string(),
+            },
+        );
+
+        let code = fakehub.get_code(USER_ID).unwrap();
+
+        let token = github_client.get_access_token(&code).unwrap();
+        let user_detail = github_client.get_user_detail(&token.access_token).unwrap();
+
+        assert_eq!(USER, user_detail.login);
+
+        fakehub.shutdown_sync();
     }
 }

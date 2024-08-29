@@ -8,6 +8,6 @@ mod temp_server;
 
 pub use self::{
     error::{Error, Result},
-    service::Fakehub,
+    service::{Fakehub, FakehubSync},
     state::User,
 };

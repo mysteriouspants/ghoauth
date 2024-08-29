@@ -1,6 +1,9 @@
+use std::sync::Arc;
+
 use crate::{error::Error, shapes::GetAccessTokenResponse, UserDetailResponse};
 
 use reqwest::Client as ReqwestClient;
+use tokio::runtime::{Builder as RuntimeBuilder, Runtime};
 
 pub const BASE_URL: &str = "https://github.com";
 pub const API_BASE_URL: &str = "https://api.github.com";
@@ -20,6 +23,11 @@ pub struct GithubClient {
     api_base_url: &'static str,
 }
 
+#[derive(Debug, Clone)]
+pub struct GithubSyncClient {
+    client: GithubClient,
+    rt: Arc<Runtime>,
+}
 impl GithubClient {
     /// Create a new Github client configured to use the public Github
     /// API.
@@ -113,4 +121,71 @@ impl std::fmt::Debug for GithubClient {
             self.http_client, self.client_id,
         )
     }
+}
+
+impl GithubSyncClient {
+    /// Create a new Github client configured to use the public Github
+    /// API.
+    pub fn new(client_id: &str, client_secret: &str) -> Result<Self, Error> {
+        Ok(Self {
+            client: GithubClient::new(client_id, client_secret)?,
+            rt: create_current_thread_rt(),
+        })
+    }
+
+    /// Create a new Github client configured to use arbitrary API
+    /// endpoints.
+    ///
+    /// See also [`crate::fakehub::Fakehub::add_client`].
+    pub fn new_with_urls(
+        client_id: &str,
+        client_secret: &str,
+        base_url: &'static str,
+        api_base_url: &'static str,
+    ) -> Result<Self, Error> {
+        Ok(Self {
+            client: GithubClient::new_with_urls(client_id, client_secret, base_url, api_base_url)?,
+            rt: create_current_thread_rt(),
+        })
+    }
+
+    /// Create a new synchronous client by wrapping an existing
+    /// asynchronous client.
+    pub fn new_from_async_client(client: GithubClient) -> Self {
+        Self {
+            client,
+            rt: create_current_thread_rt(),
+        }
+    }
+
+    /// The URL to send a user to in order to start the OAuth workflow.
+    pub fn authorization_url(&self) -> String {
+        self.client.authorization_url()
+    }
+
+    /// Exchange a login code for an access token.
+    pub fn get_access_token(&self, code: &str) -> Result<GetAccessTokenResponse, Error> {
+        self.rt.block_on(self.client.get_access_token(code))
+    }
+
+    /// Use an access token to query the user this token is associated with.
+    pub fn get_user_detail(&self, access_token: &str) -> Result<UserDetailResponse, Error> {
+        self.rt.block_on(self.client.get_user_detail(access_token))
+    }
+
+    /// Get a user's public profile.
+    pub fn get_user_detail_public(&self, username: &str) -> Result<UserDetailResponse, Error> {
+        self.rt
+            .block_on(self.client.get_user_detail_public(username))
+    }
+}
+
+fn create_current_thread_rt() -> Arc<Runtime> {
+    Arc::new(
+        RuntimeBuilder::new_current_thread()
+            .enable_io()
+            .enable_time()
+            .build()
+            .expect("Cannot construct current-thread runtime"),
+    )
 }
