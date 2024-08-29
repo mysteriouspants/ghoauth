@@ -17,7 +17,7 @@
 //! # async fn main() -> Result<(), Error> {
 //! // Fakehub is a mock Github with just enough functionality to drive
 //! // a login flow.
-//! let fakehub = Fakehub::new().await
+//! let fakehub = Fakehub::new_at_starting_port(3040).await
 //!     .expect("cannot start local fakehub server");
 //! // Train Fakehub with some fake data with add_client and add_user.
 //! // Outside of tests, use GithubClient::new.
@@ -76,7 +76,9 @@ mod tests {
 
     #[tokio::test]
     async fn oauth_flow() {
-        let fakehub = Fakehub::new()
+        // if the two tests launch close enough together they race for
+        // the starting port
+        let fakehub = Fakehub::new_at_starting_port(3050)
             .await
             .expect("cannot start local fakehub server");
 
@@ -106,7 +108,10 @@ mod tests {
 
     #[test]
     fn oauth_flow_sync() {
-        let fakehub = FakehubSync::new().expect("cannot start local fakehub server");
+        // if the two tests launch close enough together they race for
+        // the starting port
+        let fakehub =
+            FakehubSync::new_at_starting_port(3060).expect("cannot start local fakehub server");
 
         let github_client = GithubSyncClient::new_from_async_client(
             fakehub.add_client(CLIENT_ID, CLIENT_SECRET).unwrap(),

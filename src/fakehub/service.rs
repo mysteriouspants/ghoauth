@@ -36,10 +36,15 @@ pub struct FakehubSync {
 impl Fakehub {
     /// Create a new Fakehub.
     pub async fn new() -> Result<Self> {
+        Self::new_at_starting_port(3050).await
+    }
+
+    /// Create a new Fakehub starting at the given port.
+    pub async fn new_at_starting_port(starting_port: u16) -> Result<Self> {
         let state = Arc::new(Mutex::new(FakehubState::new()));
 
-        let root_server = GithubDotCom::new(3050, state.clone()).await?;
-        let api_server = ApiDotGithubDotCom::new(3051, state.clone()).await?;
+        let root_server = GithubDotCom::new(starting_port, state.clone()).await?;
+        let api_server = ApiDotGithubDotCom::new(starting_port + 1, state.clone()).await?;
 
         Ok(Self {
             root_server,
@@ -134,6 +139,18 @@ impl FakehubSync {
         Ok(Self { fakehub, rt })
     }
 
+    pub fn new_at_starting_port(start_port: u16) -> Result<Self> {
+        let rt = RuntimeBuilder::new_multi_thread()
+            .enable_io()
+            .enable_time()
+            .worker_threads(1)
+            .build()
+            .expect("Cannot construct async runtime");
+        let fakehub = rt.block_on(Fakehub::new_at_starting_port(start_port))?;
+
+        Ok(Self { fakehub, rt })
+    }
+
     /// Add a Client to this Fakehub instance and return a GithubClient configured to use it.
     pub fn add_client(
         &self,
@@ -161,5 +178,21 @@ impl FakehubSync {
     pub fn shutdown_sync(self) {
         self.rt.block_on(self.fakehub.shutdown());
         self.rt.shutdown_background();
+    }
+
+    pub fn github_dot_com_url(&self) -> String {
+        self.fakehub.github_dot_com_url()
+    }
+
+    pub fn github_dot_com_socket(&self) -> &SocketAddr {
+        self.fakehub.github_dot_com_socket()
+    }
+
+    pub fn api_dot_github_dot_com_url(&self) -> String {
+        self.fakehub.api_dot_github_dot_com_url()
+    }
+
+    pub fn api_dot_github_dot_com_socket(&self) -> &SocketAddr {
+        self.fakehub.api_dot_github_dot_com_socket()
     }
 }
