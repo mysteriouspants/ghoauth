@@ -175,7 +175,7 @@ impl FakehubSync {
     }
 
     /// Shutdown this Fakehub.
-    pub fn shutdown_sync(self) {
+    pub fn shutdown(self) {
         self.rt.block_on(self.fakehub.shutdown());
         self.rt.shutdown_background();
     }
