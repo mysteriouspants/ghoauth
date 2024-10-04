@@ -1,4 +1,4 @@
-use std::{net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr, str::FromStr, sync::Arc};
 
 use tokio::{
     runtime::{Builder as RuntimeBuilder, Runtime},
@@ -72,8 +72,8 @@ impl Fakehub {
         GithubClient::new_with_urls(
             client_id,
             client_secret,
-            self.github_dot_com_url().leak(),
-            self.api_dot_github_dot_com_url().leak(),
+            Url::from_str(&self.github_dot_com_url()).unwrap(),
+            Url::from_str(&self.api_dot_github_dot_com_url()).unwrap(),
         )
     }
 

@@ -32,3 +32,9 @@ impl From<reqwest::Error> for Error {
         Self::OtherHttp(err.to_string())
     }
 }
+
+impl From<url::ParseError> for Error {
+    fn from(err: url::ParseError) -> Self {
+        Self::OtherHttp(format!("{err:?}"))
+    }
+}

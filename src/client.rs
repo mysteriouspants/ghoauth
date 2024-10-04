@@ -1,12 +1,14 @@
-use std::sync::Arc;
+use std::{cell::LazyCell, str::FromStr, sync::Arc};
 
 use crate::{error::Error, shapes::GetAccessTokenResponse, UserDetailResponse};
 
 use reqwest::Client as ReqwestClient;
 use tokio::runtime::{Builder as RuntimeBuilder, Runtime};
+use url::Url;
 
-pub const BASE_URL: &str = "https://github.com";
-pub const API_BASE_URL: &str = "https://api.github.com";
+pub const BASE_URL: LazyCell<Url> = LazyCell::new(|| Url::from_str("https://github.com").unwrap());
+pub const API_BASE_URL: LazyCell<Url> =
+    LazyCell::new(|| Url::from_str("https://api.github.com").unwrap());
 
 /// A client for interacting with Github programmatically.
 #[derive(Clone)]
@@ -18,9 +20,9 @@ pub struct GithubClient {
     /// one private!
     client_secret: String,
     /// The base url that authorization urls are based on.
-    base_url: &'static str,
+    base_url: Url,
     /// The base url that the client uses to communicate with Github.
-    api_base_url: &'static str,
+    api_base_url: Url,
 }
 
 #[derive(Debug, Clone)]
@@ -32,7 +34,12 @@ impl GithubClient {
     /// Create a new Github client configured to use the public Github
     /// API.
     pub fn new(client_id: &str, client_secret: &str) -> Result<Self, Error> {
-        Self::new_with_urls(client_id, client_secret, BASE_URL, API_BASE_URL)
+        Self::new_with_urls(
+            client_id,
+            client_secret,
+            BASE_URL.clone(),
+            API_BASE_URL.clone(),
+        )
     }
 
     /// Create a new Github client configured to use arbitrary API
@@ -42,8 +49,8 @@ impl GithubClient {
     pub fn new_with_urls(
         client_id: &str,
         client_secret: &str,
-        base_url: &'static str,
-        api_base_url: &'static str,
+        base_url: Url,
+        api_base_url: Url,
     ) -> Result<Self, Error> {
         Ok(Self {
             http_client: reqwest::ClientBuilder::new()
@@ -74,7 +81,7 @@ impl GithubClient {
 
         Ok(self
             .http_client
-            .post(format!("{}/login/oauth/access_token", self.base_url))
+            .post(self.base_url.join("login/oauth/access_token")?)
             .form(&params)
             .header("Accept", "application/json")
             .send()
@@ -87,7 +94,7 @@ impl GithubClient {
     pub async fn get_user_detail(&self, access_token: &str) -> Result<UserDetailResponse, Error> {
         Ok(self
             .http_client
-            .get(format!("{}/user", self.api_base_url))
+            .get(self.api_base_url.join("user")?)
             .header("Authorization", format!("token {}", access_token))
             .header("Accept", "application/json")
             .send()
@@ -103,7 +110,7 @@ impl GithubClient {
     ) -> Result<UserDetailResponse, Error> {
         Ok(self
             .http_client
-            .get(format!("{}/user/{}", self.api_base_url, username))
+            .get(self.api_base_url.join(&format!("user/{}", username))?)
             .header("Accept", "application/json")
             .send()
             .await?
@@ -140,8 +147,8 @@ impl GithubSyncClient {
     pub fn new_with_urls(
         client_id: &str,
         client_secret: &str,
-        base_url: &'static str,
-        api_base_url: &'static str,
+        base_url: Url,
+        api_base_url: Url,
     ) -> Result<Self, Error> {
         Ok(Self {
             client: GithubClient::new_with_urls(client_id, client_secret, base_url, api_base_url)?,

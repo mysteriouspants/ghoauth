@@ -132,6 +132,6 @@ mod tests {
 
         assert_eq!(USER, user_detail.login);
 
-        fakehub.shutdown_sync();
+        fakehub.shutdown();
     }
 }
